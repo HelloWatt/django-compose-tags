@@ -82,6 +82,6 @@ setup(
     ],
     project_urls={
         "Source": "https://github.com/HelloWatt/django-compose-tag",
-        "Changelog": "https://github.com/HelloWatt/django-compose-tag/CHANGELOG.md",
+        "Changelog": "https://github.com/HelloWatt/django-compose-tag/blob/main/CHANGELOG.md",
     },
 )

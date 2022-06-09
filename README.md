@@ -1,5 +1,6 @@
 # Django Compose Tag
 
+[![ci-status-image]][ci-status]
 [![pypi-version]][pypi]
 
 **Compose templates easily**
@@ -11,7 +12,7 @@ with an api close to the `include` template tag.
 
 # Overview
 
-Write your template as you would for include tags:
+Write your template as you would for the include tags:
 
 ```jinja
 <!-- card.html -->
@@ -25,24 +26,24 @@ Write your template as you would for include tags:
 
 ## The `children` tag
 
-`children` has a special meaning, it will be replaced by the content that's inside the `{% compose %}` tag
+`children` has a special meaning, it will be replaced by the content that's between the `{% compose %}` and `{% endcompose %}` tags.
 
 ```jinja
 {% load compose %}
 
-{% compose "card.html" with header="My header" footer="My footer" %}
+{% compose "card.html" header="My header" footer="My footer" %}
     <p>In {% now "Y" %} we can even put template tags and {{ variables }} in here.</p>
 {% endcompose %}
 ```
 
 ## The `slot` tag
 
-`slot` allow any parameter to receive a complex values 
+`slot` allow any parameter to receive html as a value
 
 ```jinja
 {% load compose %}
 
-{% compose "card.html" with header="My header" footer="My footer" %}
+{% compose "card.html" header="My header" footer="My footer" %}
     {% slot header %}My header also use <strong>{{ varialbes }}</strong>{% endslot %}
     <p>Now i have both a complex header and a complex children</p>
 {% endcompose %}
@@ -62,7 +63,7 @@ Yet there is small differences between `compose` and `include`:
 
 * Like `include`, `compose` accept variables as parameters: `{% compose "card.html" header=var_from_context %}...{% endcompose %}`
 * Like `include`, `compose` accept the same kind of parameters for the template, that include variables: `{% compose variable_template %}...{% endcompose %}`
-* Unlike `include`, `compose` doesn't prefix it's parameters with `with`
+* Unlike `include`, `compose` doesn't prefix its parameters with `with`
 * Unlike `include`, `compose` doesn't have an `only` parameter. The parent context is never accessible within the composed template.
 
 ----
@@ -111,7 +112,8 @@ Django Compose Tag purposely provide a simple api based solely on templates.
 
 If Django Compose Tag doesn't cover your requirements we recommend you take a look at [jinja][jinja-homepage].
 
-
+[ci-status-image]: https://github.com/HelloWatt/django-compose-tag/actions/workflows/main.yml/badge.svg
+[ci-status]: https://github.com/HelloWatt/django-compose-tag/actions/workflows/main.yml
 [pypi-version]: https://img.shields.io/pypi/v/django-compose-tag.svg
 [pypi]: https://pypi.org/project/django-compose-tag/
 
