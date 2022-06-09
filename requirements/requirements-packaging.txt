@@ -1,0 +1,5 @@
+# Wheel for PyPI installs.
+wheel>=0.35.1,<0.36
+
+# Twine for secured PyPI uploads.
+twine>=3.2.0,<3.3
