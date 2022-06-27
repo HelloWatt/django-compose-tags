@@ -37,7 +37,11 @@ class ComposeNode(TagHelperNode):
     def render(self, context):
         template = self.get_template(context)
         render_context = self.get_render_context(context)
-        return template.render(render_context)
+
+        if self.takes_context:
+            with context.push(**render_context):
+                return template.render(context)
+        return template.render(context.new(render_context))
 
     def get_template(self, context):
         """Very similar implementation to django.template.loader_tags.IncludeNode"""
@@ -71,7 +75,7 @@ class ComposeNode(TagHelperNode):
         csrf_token = context.get("csrf_token")
         if csrf_token is not None:
             new_context["csrf_token"] = csrf_token
-        return context.new(new_context)
+        return new_context
 
     def get_resolved_arguments(self, context):
         resolved_args, resolved_kwargs = super().get_resolved_arguments(context)
@@ -116,8 +120,8 @@ def do_compose(parser, token):
         )
     template_name = construct_relative_path(parser.origin.template_name, bits[1])
     remaining_bits = bits[2:]
+    takes_context = "takes_context" in remaining_bits
     kwargs = token_kwargs(remaining_bits, parser, support_legacy=False)
-    takes_context = kwargs.pop("takes_context", False)  # TODO: test
     if "children" in kwargs:
         raise TemplateSyntaxError(
             "%r tag must not take children as a keyword argument." % bits[0]
