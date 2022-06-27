@@ -84,25 +84,30 @@ class ComposeNode(TagHelperNode):
             resolved_kwargs["children"] = self.nodelist.render(context)
             single_slots = context.render_context[COMPOSE_CONTEXT_KEY]["single"]
             array_slots = context.render_context[COMPOSE_CONTEXT_KEY]["array"]
-        slot_names = set()
+        single_slot_names = set()
         for slot_name, slot_rendered in single_slots:
-            if slot_name in slot_names:
+            if slot_name in single_slot_names:
                 raise TemplateSyntaxError("slot %s already declared" % slot_name)
             if slot_name in resolved_kwargs:
                 raise TemplateSyntaxError(
                     "%s is already a keyword argument, hence slot %s is forbidden"
                     % (slot_name, slot_name)
                 )
-            slot_names.add(slot_name)
+            single_slot_names.add(slot_name)
             resolved_kwargs[slot_name] = slot_rendered
-        slot_names = set()
+        array_slot_names = set()
         for slot_name, slot_rendered in array_slots:
-            if slot_name in resolved_kwargs and slot_name not in slot_names:
+            if slot_name in single_slot_names:
                 raise TemplateSyntaxError(
-                    "%s is already a keyword argument, hence slot %s is forbidden"
+                    "%s is already a single value slot, hence slot[] %s is forbidden"
                     % (slot_name, slot_name)
                 )
-            slot_names.add(slot_name)
+            if slot_name in resolved_kwargs and slot_name not in array_slot_names:
+                raise TemplateSyntaxError(
+                    "%s is already a keyword argument, hence slot[] %s is forbidden"
+                    % (slot_name, slot_name)
+                )
+            array_slot_names.add(slot_name)
             if slot_name in resolved_kwargs:
                 resolved_kwargs[slot_name].append(slot_rendered)
             else:
