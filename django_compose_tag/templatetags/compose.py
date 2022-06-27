@@ -1,9 +1,12 @@
+from django.conf import settings
 from django.template import Library, Node, TemplateSyntaxError
 from django.template.base import NodeList, token_kwargs
 from django.template.library import TagHelperNode
 from django.template.loader_tags import construct_relative_path
 
 register = Library()
+
+COMPOSE_CONTEXT_KEY = "_django_compose_context_key"
 
 
 def kwargs_only(*args, **kwargs):
@@ -19,14 +22,12 @@ class ComposeNode(TagHelperNode):
         takes_context,
         args,
         kwargs,
-        nodelist_children,
-        nodelist_slots,
+        nodelist,
         func=kwargs_only,
     ):
         super().__init__(func, takes_context, args, kwargs)
         self.template = template
-        self.nodelist_children = nodelist_children
-        self.nodelist_slots = nodelist_slots
+        self.nodelist = nodelist
 
     def render(self, context):
         template = self.get_template(context)
@@ -69,19 +70,30 @@ class ComposeNode(TagHelperNode):
 
     def get_resolved_arguments(self, context):
         resolved_args, resolved_kwargs = super().get_resolved_arguments(context)
-        for slot_node in self.nodelist_slots:
-            slot_rendered = slot_node.render(context)
-            if slot_node.name in resolved_kwargs:
-                if isinstance(resolved_kwargs[slot_node.name], list):
-                    resolved_kwargs[slot_node.name].append(slot_rendered)
+        with context.render_context.push_state(self.nodelist):
+            context.render_context[COMPOSE_CONTEXT_KEY] = []
+            resolved_kwargs["children"] = self.nodelist.render(context)
+            slots = context.render_context[COMPOSE_CONTEXT_KEY]
+        slot_names = set()
+        for slot_name, slot_rendered in slots:
+            if slot_name in slot_names:
+                raise TemplateSyntaxError("slot %s already declared" % slot_name)
+            if slot_name in resolved_kwargs:
+                raise TemplateSyntaxError(
+                    "%s is already a keyword argument, hence slot %s is forbidden"
+                    % (slot_name, slot_name)
+                )
+                """
+                if isinstance(resolved_kwargs[slot_name], list):
+                    resolved_kwargs[slot_name].append(slot_rendered)
                 else:
-                    resolved_kwargs[slot_node.name] = [
-                        resolved_kwargs[slot_node.name],
+                    resolved_kwargs[slot_name] = [
+                        resolved_kwargs[slot_name],
                         slot_rendered,
                     ]
-            else:
-                resolved_kwargs[slot_node.name] = slot_rendered
-        resolved_kwargs["children"] = self.nodelist_children.render(context)
+                """
+            slot_names.add(slot_name)
+            resolved_kwargs[slot_name] = slot_rendered
         return resolved_args, resolved_kwargs
 
 
@@ -103,26 +115,12 @@ def do_compose(parser, token):
         )
     nodelist = parser.parse(("endcompose",))
     parser.next_token()
-    nodelist_children = NodeList()
-    nodelist_slots = NodeList()
-    for node in nodelist:
-        if isinstance(node, SlotNode):
-            if node.name in kwargs:
-                raise TemplateSyntaxError(
-                    "%r tag received %r both as a keyword argument and a slot."
-                    % (bits[0], node.name)
-                )
-            nodelist_slots.append(node)
-            # TODO: handle deep slots
-        else:
-            nodelist_children.append(node)
     return ComposeNode(
         parser.compile_filter(template_name),
         takes_context,
         [],
         kwargs,
-        nodelist_children,
-        nodelist_slots,
+        nodelist,
     )
 
 
@@ -132,7 +130,14 @@ class SlotNode(Node):
         self.nodelist = nodelist
 
     def render(self, context):
-        return self.nodelist.render(context)
+        if COMPOSE_CONTEXT_KEY not in context.render_context:
+            raise TemplateSyntaxError(
+                "slot must be a descendant of compose or a descendant of a compose component"
+            )
+        context.render_context[COMPOSE_CONTEXT_KEY].append(
+            (self.name, self.nodelist.render(context))
+        )
+        return ""
 
 
 @register.tag("slot")

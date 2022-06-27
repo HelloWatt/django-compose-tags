@@ -23,7 +23,7 @@ def read_expected(template_name):
 
 def gather_autotest_templates(autotest_folder: str):
     return [
-        os.path.join(autotest_folder, f)
+        (os.path.join(autotest_folder, f), f)
         for f in os.listdir(os.path.join(dir_path, "templates", autotest_folder))
         if f.startswith("test")
     ]
@@ -32,8 +32,10 @@ def gather_autotest_templates(autotest_folder: str):
 @pytest.mark.parametrize(
     "template_name,template_expected",
     (
-        (template_name, template_name.replace("test_", "expect_"))
-        for template_name in gather_autotest_templates("autotest")
+        pytest.param(
+            template_name, template_name.replace("test_", "expect_"), id=filename
+        )
+        for template_name, filename in gather_autotest_templates("autotest")
     ),
 )
 def test_autotest_template(template_name, template_expected):
@@ -47,8 +49,10 @@ def test_autotest_template(template_name, template_expected):
 @pytest.mark.parametrize(
     "template_name",
     (
-        (template_name,)
-        for template_name in gather_autotest_templates("autotest_template_syntax_error")
+        pytest.param(template_name, id=filename)
+        for template_name, filename in gather_autotest_templates(
+            "autotest_template_syntax_error"
+        )
     ),
 )
 def test_autotest_template_syntax_error(template_name):

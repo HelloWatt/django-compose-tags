@@ -1,0 +1,6 @@
+{% load compose %}
+
+{% compose "two_slots.html" %}
+    {% if True %}{% slot slot1 %}Should render{% endslot %}{% endif %}
+    {% if False %}{% slot slot2 %}Should not render{% endslot %}{% endif %}
+{% endcompose %}

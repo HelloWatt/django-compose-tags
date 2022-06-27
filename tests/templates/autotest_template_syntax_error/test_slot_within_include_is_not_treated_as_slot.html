@@ -1,0 +1,5 @@
+{% load compose %}
+
+{% compose "composed.html" %}
+    {% include "autotest_template_syntax_error/test_slot_is_not_a_child_of_compose.html" %}
+{% endcompose %}
