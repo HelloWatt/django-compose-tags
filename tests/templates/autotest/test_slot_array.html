@@ -1,0 +1,6 @@
+{% load compose %}
+
+{% compose "composed_array.html" %}
+    {% slot[] array %}1{% endslot %}
+    {% slot[] array %}2{% endslot %}
+{% endcompose %}

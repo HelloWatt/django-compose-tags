@@ -1,3 +1,6 @@
 {% load compose %}
 
-{% compose "composed.html" %}{% slot value %}{% endslot %}{% slot value %}{% endslot %}{% endcompose %}
+{% compose "composed.html" %}
+    {% slot value %}{% endslot %}
+    {% slot value %}{% endslot %}
+{% endcompose %}

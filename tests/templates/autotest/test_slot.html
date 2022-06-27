@@ -1,3 +1,6 @@
 {% load compose %}
 
-{% compose "composed.html" %}{% slot variable %}Slot{% endslot %}Children{% endcompose %}
+{% compose "composed.html" %}
+    {% slot variable %}Slot{% endslot %}
+    Children
+{% endcompose %}

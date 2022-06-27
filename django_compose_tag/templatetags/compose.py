@@ -1,6 +1,5 @@
-from django.conf import settings
 from django.template import Library, Node, TemplateSyntaxError
-from django.template.base import NodeList, token_kwargs
+from django.template.base import token_kwargs
 from django.template.library import TagHelperNode
 from django.template.loader_tags import construct_relative_path
 
@@ -11,6 +10,12 @@ COMPOSE_CONTEXT_KEY = "_django_compose_context_key"
 
 def kwargs_only(*args, **kwargs):
     return kwargs
+
+
+def single_or_array_key(is_array):
+    if is_array:
+        return "array"
+    return "single"
 
 
 class ComposeNode(TagHelperNode):
@@ -71,11 +76,12 @@ class ComposeNode(TagHelperNode):
     def get_resolved_arguments(self, context):
         resolved_args, resolved_kwargs = super().get_resolved_arguments(context)
         with context.render_context.push_state(self.nodelist):
-            context.render_context[COMPOSE_CONTEXT_KEY] = []
+            context.render_context[COMPOSE_CONTEXT_KEY] = {"single": [], "array": []}
             resolved_kwargs["children"] = self.nodelist.render(context)
-            slots = context.render_context[COMPOSE_CONTEXT_KEY]
+            single_slots = context.render_context[COMPOSE_CONTEXT_KEY]["single"]
+            array_slots = context.render_context[COMPOSE_CONTEXT_KEY]["array"]
         slot_names = set()
-        for slot_name, slot_rendered in slots:
+        for slot_name, slot_rendered in single_slots:
             if slot_name in slot_names:
                 raise TemplateSyntaxError("slot %s already declared" % slot_name)
             if slot_name in resolved_kwargs:
@@ -83,17 +89,20 @@ class ComposeNode(TagHelperNode):
                     "%s is already a keyword argument, hence slot %s is forbidden"
                     % (slot_name, slot_name)
                 )
-                """
-                if isinstance(resolved_kwargs[slot_name], list):
-                    resolved_kwargs[slot_name].append(slot_rendered)
-                else:
-                    resolved_kwargs[slot_name] = [
-                        resolved_kwargs[slot_name],
-                        slot_rendered,
-                    ]
-                """
             slot_names.add(slot_name)
             resolved_kwargs[slot_name] = slot_rendered
+        slot_names = set()
+        for slot_name, slot_rendered in array_slots:
+            if slot_name in resolved_kwargs and slot_name not in slot_names:
+                raise TemplateSyntaxError(
+                    "%s is already a keyword argument, hence slot %s is forbidden"
+                    % (slot_name, slot_name)
+                )
+            slot_names.add(slot_name)
+            if slot_name in resolved_kwargs:
+                resolved_kwargs[slot_name].append(slot_rendered)
+            else:
+                resolved_kwargs[slot_name] = [slot_rendered]
         return resolved_args, resolved_kwargs
 
 
@@ -125,24 +134,24 @@ def do_compose(parser, token):
 
 
 class SlotNode(Node):
-    def __init__(self, name, nodelist):
+    def __init__(self, name, nodelist, slot_type):
         self.name = name
         self.nodelist = nodelist
+        self.slot_type = slot_type
 
     def render(self, context):
         if COMPOSE_CONTEXT_KEY not in context.render_context:
             raise TemplateSyntaxError(
                 "slot must be a descendant of compose or a descendant of a compose component"
             )
-        context.render_context[COMPOSE_CONTEXT_KEY].append(
+        context.render_context[COMPOSE_CONTEXT_KEY][self.slot_type].append(
             (self.name, self.nodelist.render(context))
         )
         return ""
 
 
 @register.tag("slot")
-def do_slot(parser, token):
-    # TODO: raise if not a descendant of compose
+def do_slot(parser, token, slot_type="single"):
     bits = token.split_contents()
     if len(bits) != 2:
         raise TemplateSyntaxError("'%s' takes one argument" % bits[0])
@@ -150,4 +159,9 @@ def do_slot(parser, token):
         raise TemplateSyntaxError("'%s' must not be named children." % bits[0])
     nodelist = parser.parse(("endslot",))
     parser.next_token()
-    return SlotNode(bits[1], nodelist)
+    return SlotNode(bits[1], nodelist, slot_type)
+
+
+@register.tag("slot[]")
+def do_slot_array(parser, token):
+    return do_slot(parser, token, slot_type="array")

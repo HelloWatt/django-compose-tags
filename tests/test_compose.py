@@ -11,9 +11,9 @@ def format_html(html):
     """
     Helper function that formats HTML for easier comparison
     :param html: raw HTML text to be formatted
-    :return: Cleaned HTML with no newlines or spaces
+    :return: Cleaned HTML with no newlines. Each line is striped
     """
-    return html.strip()
+    return "".join([line.strip() for line in html.split("\n")])
 
 
 def read_expected(template_name):
