@@ -1,0 +1,7 @@
+{% load compose %}
+
+{% compose "composed_array.html" %}
+    {% for letter in "abc" %}
+        {% slot[] array %}({{ letter }}){% endslot %}
+    {% endfor %}
+{% endcompose %}
