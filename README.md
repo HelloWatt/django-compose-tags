@@ -5,7 +5,7 @@
 
 **Compose templates easily**
 
-Django Compose tag provide two template tags, `compose` and `slot` that make template composition easy,
+Django Compose tag provide a template tag for templates composition, 
 with an api close to the `include` template tag.
 
 ---
@@ -35,21 +35,6 @@ Write your template as you would for the include tags:
     <p>In {% now "Y" %} we can even put template tags and {{ variables }} in here.</p>
 {% endcompose %}
 ```
-
-## The `slot` tag
-
-`slot` allow any parameter to receive html as a value
-
-```jinja
-{% load compose %}
-
-{% compose "card.html" header="My header" footer="My footer" %}
-    {% slot header %}My header also use <strong>{{ varialbes }}</strong>{% endslot %}
-    <p>Now i have both a complex header and a complex children</p>
-{% endcompose %}
-```
-
-That's it ! You've seen most of the api.
 
 ## Similarities to include
 

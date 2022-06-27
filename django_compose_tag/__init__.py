@@ -8,3 +8,5 @@ __copyright__ = "Copyright 2022 Hello Watt"
 
 # Version synonym
 VERSION = __version__
+
+from .library import Library
