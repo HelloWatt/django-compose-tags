@@ -54,3 +54,12 @@ def test_autotest_template(template_name, template_expected):
 def test_autotest_template_syntax_error(template_name):
     with pytest.raises(TemplateSyntaxError):
         render_to_string(template_name)
+
+
+def test_ensure_csrf():
+    assert (
+        format_html(
+            render_to_string("test/compose_csrf.html", {"csrf_token": "test_csrf"})
+        )
+        == "test_csrf"
+    )

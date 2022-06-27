@@ -62,7 +62,7 @@ class ComposeNode(TagHelperNode):
     def get_render_context(self, context):
         resolved_args, resolved_kwargs = self.get_resolved_arguments(context)
         new_context = self.func(*resolved_args, **resolved_kwargs)
-        csrf_token = context.get("csrf_token")  # TODO: test
+        csrf_token = context.get("csrf_token")
         if csrf_token is not None:
             new_context["csrf_token"] = csrf_token
         return context.new(new_context)
