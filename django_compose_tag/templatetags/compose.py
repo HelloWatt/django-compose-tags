@@ -1,5 +1,3 @@
-from inspect import getfullargspec, unwrap
-
 from django.template import Library, TemplateSyntaxError
 from django.template.base import token_kwargs
 from django.template.loader_tags import construct_relative_path
@@ -7,8 +5,6 @@ from django.template.loader_tags import construct_relative_path
 from django_compose_tag.node import ComposeNode
 
 register = Library()
-
-# *return_kwargs_only_fullargspec, _ = getfullargspec(unwrap(return_kwargs_only))
 
 
 @register.tag("compose")
