@@ -42,9 +42,6 @@ def parse_bits_with_children(
                 "'%s' is decorated with takes_context=True so it must "
                 "have a second argument of 'context'" % name
             )
-    # TODO: test remove children from params.
-    # TODO: ensure it error when children as kwargs
-    # TODO: ensure same error when children here and in do_compose
     return parse_bits(
         parser,
         bits,

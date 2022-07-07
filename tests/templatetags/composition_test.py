@@ -31,3 +31,19 @@ def no_children():
 @register.composition_tag("composition/button.html", "no_context", takes_context=True)
 def no_context(children):
     return
+
+
+@register.composition_tag("composition/button.html", "with_args")
+def with_args(children, disabled):
+    return {
+        "disabled": disabled,
+        "children": children,
+    }
+
+
+@register.composition_tag("composition/button.html", "with_kwargs")
+def with_kwargs(children, disabled):
+    return {
+        "disabled": disabled,
+        "children": children,
+    }
