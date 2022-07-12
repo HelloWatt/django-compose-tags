@@ -77,3 +77,13 @@ class CompositionNode(InclusionNode):
         children = self.nodelist.render(context)
         resolved_args = [children] + resolved_args
         return resolved_args, resolved_kwargs
+
+
+class DefineNode(Node):
+    def __init__(self, target_var, nodelist):
+        self.target_var = target_var
+        self.nodelist = nodelist
+
+    def render(self, context):
+        context[self.target_var] = self.nodelist.render(context)
+        return ""

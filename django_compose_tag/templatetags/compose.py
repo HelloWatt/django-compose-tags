@@ -2,7 +2,7 @@ from django.template import Library, TemplateSyntaxError
 from django.template.base import token_kwargs
 from django.template.loader_tags import construct_relative_path
 
-from django_compose_tag.node import ComposeNode
+from django_compose_tag.node import ComposeNode, DefineNode
 
 register = Library()
 
@@ -33,3 +33,19 @@ def do_compose(parser, token):
         extra_context,
         takes_context,
     )
+
+
+# TODO rename templatetags/compose.py or split in to files?
+@register.tag("define")
+def do_define(parser, token):
+    bits = token.split_contents()
+    if len(bits) != 2:
+        raise TemplateSyntaxError(
+            "%r tag takes one argument: the name of the template variable that should store the result."
+            % bits[0]
+        )
+
+    nodelist = parser.parse((f"enddefine",))
+    parser.next_token()
+
+    return DefineNode(bits[-1], nodelist)
