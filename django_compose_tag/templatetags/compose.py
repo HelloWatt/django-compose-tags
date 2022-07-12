@@ -1,8 +1,10 @@
+import re
+
 from django.template import Library, TemplateSyntaxError
-from django.template.base import token_kwargs
+from django.template.base import FILTER_SEPARATOR, token_kwargs
 from django.template.loader_tags import construct_relative_path
 
-from django_compose_tag.node import ComposeNode, DefineNode
+from django_compose_tag.node import ComposeNode, DefineForNode, DefineNode
 
 register = Library()
 
@@ -35,17 +37,67 @@ def do_compose(parser, token):
     )
 
 
-# TODO rename templatetags/compose.py or split in to files?
 @register.tag("define")
 def do_define(parser, token):
     bits = token.split_contents()
     if len(bits) != 2:
         raise TemplateSyntaxError(
-            "%r tag takes one argument: the name of the template variable that should store the result."
-            % bits[0]
+            "define tag takes exactly one argument: the name of the template variable that should store the result. Eg: {% define myvar %}value{% enddefine %}"
         )
+    target_var = bits[1]
 
     nodelist = parser.parse((f"enddefine",))
     parser.next_token()
+    return DefineNode(target_var, nodelist)
 
-    return DefineNode(bits[-1], nodelist)
+
+@register.tag("definearray")
+def do_define_array(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise TemplateSyntaxError(
+            "%r tag takes at least one argument: the name of the template variable that should store the result. Eg: {% definearray myvar for x in array %}item is {x}{% enddefinearray %}"
+            % bits[0]
+        )
+    target_var = bits[1]
+
+    if len(bits) == 2 or bits[2] != "for":
+        raise TemplateSyntaxError(
+            "definearray statements should be formated as {% definearray myvar for x in array %}"
+        )
+
+    # Most of this implementation come from django.template.defaulttags.do_for
+    for_bits = bits[2:]
+    is_reversed = for_bits[-1] == "reversed"
+    in_index = -3 if is_reversed else -2
+    if for_bits[in_index] != "in":
+        raise TemplateSyntaxError(
+            "'define myvar for' statements should use the format"
+            " 'define myvar for x in y': %s" % token.contents
+        )
+
+    invalid_chars = frozenset((" ", '"', "'", FILTER_SEPARATOR))
+    loopvars = re.split(r" *, *", " ".join(for_bits[1:in_index]))
+    for var in loopvars:
+        if not var or not invalid_chars.isdisjoint(var):
+            raise TemplateSyntaxError(
+                "'define myvar for' received an invalid argument:"
+                " %s" % token.contents
+            )
+
+    sequence = parser.compile_filter(for_bits[in_index + 1])
+    nodelist_loop = parser.parse(
+        (
+            "empty",
+            "enddefinearray",
+        )
+    )
+    token = parser.next_token()
+    if token.contents == "empty":
+        nodelist_empty = parser.parse(("enddefinearray",))
+        parser.delete_first_token()
+    else:
+        nodelist_empty = None
+    return DefineForNode(
+        target_var, loopvars, sequence, is_reversed, nodelist_loop, nodelist_empty
+    )
