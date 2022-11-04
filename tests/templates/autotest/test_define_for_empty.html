@@ -1,11 +1,11 @@
 {% load compose %}
 
-{% definearray myarray for i in "abc" %}Hello {{ i }}{% empty %}Empty{% enddefinearray %}
-{% definearray myarray_empty for i in "" %}Hello {{ i }}{% empty %}Empty{% enddefinearray %}
+{% definelist mylist for i in "abc" %}Hello {{ i }}{% empty %}Empty{% enddefinelist %}
+{% definelist mylist_empty for i in "" %}Hello {{ i }}{% empty %}Empty{% enddefinelist %}
 
-{% for v in myarray %}
+{% for v in mylist %}
 Say: {{ v }}
 {% endfor %}
-{% for v in myarray_empty %}
+{% for v in mylist_empty %}
 Say: {{ v }}
 {% endfor %}

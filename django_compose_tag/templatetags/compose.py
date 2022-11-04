@@ -51,19 +51,19 @@ def do_define(parser, token):
     return DefineNode(target_var, nodelist)
 
 
-@register.tag("definearray")
-def do_define_array(parser, token):
+@register.tag("definelist")
+def do_define_list(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise TemplateSyntaxError(
-            "%r tag takes at least one argument: the name of the template variable that should store the result. Eg: {% definearray myvar for x in array %}item is {x}{% enddefinearray %}"
+            "%r tag takes at least one argument: the name of the template variable that should store the result. Eg: {% definelist myvar for x in list %}item is {x}{% enddefinelist %}"
             % bits[0]
         )
     target_var = bits[1]
 
     if len(bits) == 2 or bits[2] != "for":
         raise TemplateSyntaxError(
-            "definearray statements should be formated as {% definearray myvar for x in array %}"
+            "definelist statements should be formated as {% definelist myvar for x in list %}"
         )
 
     # Most of this implementation come from django.template.defaulttags.do_for
@@ -89,12 +89,12 @@ def do_define_array(parser, token):
     nodelist_loop = parser.parse(
         (
             "empty",
-            "enddefinearray",
+            "enddefinelist",
         )
     )
     token = parser.next_token()
     if token.contents == "empty":
-        nodelist_empty = parser.parse(("enddefinearray",))
+        nodelist_empty = parser.parse(("enddefinelist",))
         parser.delete_first_token()
     else:
         nodelist_empty = None

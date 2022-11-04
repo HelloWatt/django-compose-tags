@@ -1,7 +1,7 @@
 {% load compose %}
 
-{% definearray myarray for i in "abc" %}Hello {{ i }}{% enddefinearray %}
+{% definelist mylist for i in "abc" %}Hello {{ i }}{% enddefinelist %}
 
-{% for v in myarray %}
+{% for v in mylist %}
 Say: {{ v }}
 {% endfor %}

@@ -124,7 +124,7 @@ class DefineForNode(Node):
         )
 
     def render(self, context):
-        array_value = []  # divergence from ForNode
+        list_value = []  # divergence from ForNode
 
         if "forloop" in context:
             parentloop = context["forloop"]
@@ -139,7 +139,7 @@ class DefineForNode(Node):
                 values = list(values)
             len_values = len(values)
             if len_values < 1:
-                array_value = [
+                list_value = [
                     self.nodelist_empty.render(context)
                 ]  # divergence from ForNode
             else:  # divergence from ForNode
@@ -191,8 +191,8 @@ class DefineForNode(Node):
                         # the context ending up in an inconsistent state when other
                         # tags (e.g., include and with) push data to context.
                         context.pop()
-                    array_value.append(
+                    list_value.append(
                         mark_safe("".join(nodelist))
                     )  # divergence from ForNode
-        context[self.target_var] = array_value  # divergence from ForNode
+        context[self.target_var] = list_value  # divergence from ForNode
         return ""  # divergence from ForNode
