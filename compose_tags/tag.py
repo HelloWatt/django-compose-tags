@@ -1,7 +1,6 @@
 import functools
 from inspect import getfullargspec, unwrap
 
-import django.template
 from django.template import TemplateSyntaxError
 from django.template.library import parse_bits
 

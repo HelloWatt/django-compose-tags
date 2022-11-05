@@ -5,51 +5,121 @@
 
 **Compose templates easily**
 
-Django Compose tag provide a template tag for templates composition, 
+Django Compose tags provide the tags to ease templates composition, 
 with an api close to the `include` template tag.
+
+The api is thought to ease the implementation and usage of design systems in django.  
 
 ---
 
 # Overview
 
-Write your template as you would for the include tags:
+Write your template as you would for the `include` tag:
 
 ```jinja
 <!-- card.html -->
 
 <article class="card">
-    <header class="card-header">{{ header }}</header>
     <div class="card-body">{{ children }}</div>
     <footer class="card-footer">{{ footer }}</footer>
 </article>
 ```
 
-## The `children` tag
+## The `compose` tag
 
-`children` has a special meaning, it will be replaced by the content that's between the `{% compose %}` and `{% endcompose %}` tags.
+The `compose` template tag behave similarly to [django's `include`][django-include-doc].
+The main difference is that the content between `{% compose %}` and `{% endcompose %}` is regular django template that's accessible withing the composed template as the `{{ children }}` variable.
 
 ```jinja
 {% load compose %}
 
-{% compose "card.html" header="My header" footer="My footer" %}
-    <p>In {% now "Y" %} we can even put template tags and {{ variables }} in here.</p>
+{% compose "card.html" footer="My footer" %}
+    <p>card.html receive this as the {{ children }} variable</p>
+    <p>You can use {{ context_varialbe }} in here.</p>
 {% endcompose %}
 ```
 
-## Similarities to include
+By default the composed template doesn't have access to the context, if you need access to the context set the takes_context option `{% compose "card.html" takes_context %}`. `takes_context` is the opposite of the `only` 
 
-card.html is a regular template, so we can use it with a regular include when parameters are simple
+## The `define` tag
+
+### define
+
+The `define` template tag allows you to set a new variable from within a template. That's a convenient way to use template rendered variables for any tag parameter.
 
 ```jinja
-{% include "card.html" with header="My header" children="My body" footer="My footer" %}
+{% define mylink %}<a href={{ link.url }}>Go to {{ link.name }}{% enddefine %}
+
+{% include "card.html" children="Card body" footer=mylink %}
+{% compose "card.html" footer=mylink %}
+Card body with {{ context_variable }}
+{% endcompose %}
 ```
 
-Yet there is small differences between `compose` and `include`:
+## Custom composition tag
 
-* Like `include`, `compose` accept variables as parameters: `{% compose "card.html" header=var_from_context %}...{% endcompose %}`
-* Like `include`, `compose` accept the same kind of parameters for the template, that include variables: `{% compose variable_template %}...{% endcompose %}`
-* Unlike `include`, `compose` doesn't prefix its parameters with `with`
-* Unlike `include`, `compose` doesn't have an `only` parameter. The parent context is never accessible within the composed template.
+`composition_tag` is to `compose` what [`inclustion_tag`][django-inclusiontag-doc] is to the `include` tag.
+
+Define you tag function and decorate it with `composition_tag`, the decorator takes care of passing the children as the first argument of your custom tag.
+
+```python
+# mydesignsystem/templatetags/mydesignsystem.py
+
+from django.template import Library
+from compose_tags import composition_tag
+
+register = Library()
+
+@register.tag
+@composition_tag('card.html', takes_context=True)
+def card(children, context, next, cancelable=False):
+    return {
+        "children": children,
+        "footer": create_footer(next, cancelable),
+    }
+```
+
+Then use it in your templates, by default the tag is named after your function name.
+
+```jinja
+{% load mydesignsystem %}
+
+{% card next=someurl cancelable=True %}My card children{% endcard %}
+```
+
+### Declaring composition_tag
+
+There are multiple ways to use composition_tag. The first is as a decorator:
+
+```python
+@register.tag
+@composition_tag('template.html')
+def mytag(children, **kwargs):
+    # Usage: {% mytag %}children{% endmytag %} 
+    ...
+
+@register.tag("customname")
+@composition_tag('template.html')
+def mytag(children, **kwargs):
+    # Usage: {% customname %}children{% endcustomname %} 
+    ...
+```
+
+When you don't need to do any python processing, there is a default implementation that forward all parameters as is.
+When you rely on that default implementation the default tag name is derived from the template name.
+
+Which mean `register.tag(composition_tag("button.html"))` is equivalent to
+```python
+@register.tag
+@composition_tag('button.html')
+def button(children, **kwargs):
+    return {
+        **kwargs,
+        "children": children
+    }
+```
+
+As with the decorator usage, you can override the tag name: `register.tag("mybutton", composition_tag("button.html"))`
 
 ----
 
@@ -63,19 +133,17 @@ each Python and Django series.
 
 # Installation
 
-Install using `pip`...
+Install using `pip install django-compose-tags`
 
-    pip install django-compose-tags
-
-Add `'django_compose_tagss'` to your `INSTALLED_APPS` setting.
+Add `'compose_tags'` to your `INSTALLED_APPS` setting.
 ```python
 INSTALLED_APPS = [
     ...
-    'django_compose_tagss',
+    'compose_tags',
 ]
 ```
 
-If you use compose a lot we recommend you add it as to your builtins:
+If you use `compose` a lot we recommend you add it to your builtins:
 
 ```python
 TEMPLATES = [
@@ -83,7 +151,7 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "OPTIONS": {
             # ...
-            "builtins": ["django_compose_tagss.templatetags.compose"],
+            "builtins": ["compose_tags.templatetags.compose"],
         }
     }
 ]
@@ -104,3 +172,5 @@ If Django Compose Tag doesn't cover your requirements we recommend you take a lo
 
 
 [jinja-homepage]: https://jinja.palletsprojects.com
+[django-include-doc]: https://docs.djangoproject.com/en/dev/ref/templates/builtins/#include
+[django-inclusiontag-doc]: https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#inclusion-tags
