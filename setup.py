@@ -54,7 +54,7 @@ setup(
     author_email="jerome@hellowatt.fr",
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
-    install_requires=["Django>=3.0"],
+    install_requires=["Django>=2.2"],
     python_requires=">=3.6",
     zip_safe=False,
     classifiers=[
