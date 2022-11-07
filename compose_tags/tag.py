@@ -28,7 +28,7 @@ def parse_bits_with_children(
     Do the same as parse_bits, except that context is the second argument, not the first.
     The first one being children.
     """
-    if not params or not params[0] == "children":
+    if not params or params[0] != "children":
         raise TemplateSyntaxError(
             "'%s' must have a first argument of 'children'" % name
         )
@@ -84,8 +84,8 @@ def composition_tag(
         ) = getfullargspec(unwrap(func))
 
         @functools.wraps(func)
-        def compile_func(parser, token):
-            name, *bits = token.split_contents()
+        def compile_func(parser, compose_token):
+            name, *bits = compose_token.split_contents()
             args, kwargs = parse_bits_with_children(
                 parser,
                 bits,
