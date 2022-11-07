@@ -5,10 +5,10 @@
 
 **Compose templates easily**
 
-Django Compose tags provide the tags to ease templates composition, 
+Django Compose tags provides the tags to ease templates composition, 
 with an api close to the `include` template tag.
 
-The api is thought to ease the implementation and usage of design systems in django.  
+The api is thought to simplify the implementation and usage of design systems in django.  
 
 ---
 
@@ -27,8 +27,8 @@ Write your template as you would for the `include` tag:
 
 ## The `compose` tag
 
-The `compose` template tag behave similarly to [django's `include`][django-include-doc].
-The main difference is that the content between `{% compose %}` and `{% endcompose %}` is regular django template that's accessible withing the composed template as the `{{ children }}` variable.
+The `compose` template tag behaves similarly to [django's `include`][django-include-doc].
+The main difference is that the content between `{% compose %}` and `{% endcompose %}` is regular django template that's accessible within the composed template as the `{{ children }}` variable.
 
 ```jinja
 {% load compose %}
@@ -39,7 +39,7 @@ The main difference is that the content between `{% compose %}` and `{% endcompo
 {% endcompose %}
 ```
 
-By default the composed template doesn't have access to the context, if you need access to the context set the takes_context option `{% compose "card.html" takes_context %}`. `takes_context` is the opposite of the `only` 
+By default, the composed template doesn't have access to the context, if you need access to the context set the takes_context option `{% compose "card.html" takes_context %}`. `takes_context` is the opposite of the `only` 
 
 ## The `define` tag
 
@@ -60,7 +60,7 @@ Card body with {{ context_variable }}
 
 `composition_tag` is to `compose` what [`inclustion_tag`][django-inclusiontag-doc] is to the `include` tag.
 
-Define you tag function and decorate it with `composition_tag`, the decorator takes care of passing the children as the first argument of your custom tag.
+Define your tag function and decorate it with `composition_tag`, the decorator takes care of passing the children as the first argument of your custom tag.
 
 ```python
 # mydesignsystem/templatetags/mydesignsystem.py
@@ -105,10 +105,10 @@ def mytag(children, **kwargs):
     ...
 ```
 
-When you don't need to do any python processing, there is a default implementation that forward all parameters as is.
+When you don't need to do any python processing, there is a default implementation that forwards all parameters as is.
 When you rely on that default implementation the default tag name is derived from the template name.
 
-Which mean `register.tag(composition_tag("button.html"))` is equivalent to
+Which means `register.tag(composition_tag("button.html"))` is equivalent to
 ```python
 @register.tag
 @composition_tag('button.html')
